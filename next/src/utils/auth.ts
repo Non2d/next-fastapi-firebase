@@ -10,6 +10,17 @@ const signInWithGoogle = async () => {
         const result = await signInWithPopup(auth, provider);
         // Googleユーザー情報を取得
         const user = result.user;
+        const response = await fetch("http://localhost:8080/user", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                uid: user.uid,
+                email: user.email,
+                name: user.displayName,
+            }),
+        });
         console.log("Logged in as ", user.displayName, user.email, user.uid);
         toast.success("Logged in as " + user.displayName);
     } catch (error) {
