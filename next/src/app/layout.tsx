@@ -1,20 +1,17 @@
-import type { Metadata } from "next";
+"use client";
+
 import "./globals.css";
+import { AuthProvider } from "../context/AuthContext";
+import { Toaster } from 'react-hot-toast';
 
-export const metadata: Metadata = {
-  title: "Home page",
-  description: "Root Page",
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="jp">
+    <html>
       <body>
-        {children}
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

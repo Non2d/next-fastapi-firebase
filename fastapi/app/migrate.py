@@ -1,31 +1,29 @@
-# import firebase_admin
-# from firebase_admin import credentials, db
-# from dotenv import load_dotenv
-# load_dotenv("./.env")
-# import os
+import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.sql import text
 
-# print("Resetting the database...")
+ASYNC_DB_URL = "mysql+aiomysql://root@db:3306/mercari?charset=utf8"
+async_engine = create_async_engine(ASYNC_DB_URL, echo=True)
 
-# # Firebaseのサービスアカウントキーのパス
-# SERVICE_ACCOUNT_KEY_PATH = os.getenv("FB_SERVICE_ACCOUNT_KEY_PATH")
+async def wait_for_db_connection(max_retries=5, wait_interval=5):
+    retries = 0
+    while retries < max_retries:
+        try:
+            async with async_engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+            print("Database connection successful")
+            return True
+        except OperationalError:
+            retries += 1
+            print(f"Database connection failed. Retrying in {wait_interval} seconds...")
+            await asyncio.sleep(wait_interval)
+    print("Could not connect to the database. Exiting.")
+    return False
 
-# # Firebase Admin SDKの初期化
-# try:
-#     cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
-#     firebase_admin.initialize_app(cred, {
-#         'databaseURL': os.getenv("FB_DATABASE_URL")
-#     })
-# except ValueError as e:
-#     print(f"Error initializing Firebase Admin SDK: {e}")
-#     raise
-
-# # データベースのリセット
-# def reset_database():
-#     ref = db.reference('/')
-#     ref.set()
-# if __name__ == "__main__":
-#     reset_database()
-
-# # db.reference('/') を返す関数
-# def get_db(path='/'):
-#     return db.reference(path)
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    if loop.run_until_complete(wait_for_db_connection()):
+        print("Exiting after successful database connection")
+    else:
+        print("Exiting due to database connection failure.")

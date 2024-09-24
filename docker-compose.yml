@@ -9,10 +9,10 @@ services:
     volumes:
       - ./next:/app
       - node_modules:/app/node_modules
-    networks:
-      - mercari-network
     environment:
       - WATCHPACK_POLLING=true
+    command: sh -c "npm run dev"
+
   fastapi:
     container_name: mercari-fastapi
     build:
@@ -20,14 +20,32 @@ services:
       dockerfile: Dockerfile.dev
     ports:
       - "8080:8080"
+    depends_on:
+      - db
     volumes:
       - ./fastapi/app:/app
-    networks:
-      - mercari-network
+
+  db: #ユーザ名：root, パスワード：なし
+    container_name: mercari-db
+    build:
+      context: ./mysql
+      dockerfile: Dockerfile.dev
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_DATABASE: "mercari"
+      TZ: "Asia/Tokyo"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    container_name: mercari-dbconsole
+    image: phpmyadmin:latest
+    ports:
+      - "8081:80"
   
 volumes:
   node_modules:
-
-networks:
-  mercari-network:
-    external: true
+  mysql_data:
